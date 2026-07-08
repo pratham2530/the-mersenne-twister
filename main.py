@@ -1,20 +1,21 @@
-"""Module providing a class-based implementation of the MT19937 Mersenne Twister.
+"""Module providing an implementation of the MT19937 Mersenne Twister.
 
-This module contains the underlying MersenneTwister pseudo-random number generator
-and a helper Random class to transform raw outputs into bounded continuous intervals.
+This module contains the underlying MersenneTwister PRNG and a helper Random class 
+which outputs an arbitrary number of numbers in an interval. 
+
+Use the summary in the repository to help understand each method properly. 
 """
 
 import os
 
 
 class MersenneTwister:
-    """A 32-bit Mersenne Twister pseudo-random number generator (MT19937)."""
 
     def __init__(self, seed_val: int = 5489) -> None:
         """Initialize the generator state and seed the grid.
 
         Args:
-            seed_val (int): The initial value used to kickstart the state grid.
+            seed_val (int): The initial value used to seed the state_grid. 
                 Defaults to 5489.
         """
         # The size of the state grid.
@@ -26,13 +27,10 @@ class MersenneTwister:
         self.state_grid(seed_val)
 
     def state_grid(self, seed_val: int) -> None:
-        """Populate the internal 624-cell state grid using a Knuth multiplier.
-
-        Isolates bit positions and distributes entropy bi-directionally
-        between high and low-order bits across the state array.
+        """Populate the state grid using a Knuth multiplier.
 
         Args:
-            seed_val (int): Initial integer seed value to generate state sequence from.
+            seed_val (int): The initial value used to seed the state_grid. 
         """
         # Fill first cell with the seed value as a 32-bit integer.
         self.state[0] = seed_val & 0xFFFFFFFF
@@ -53,10 +51,9 @@ class MersenneTwister:
             ) & 0xFFFFFFFF
 
     def twist(self) -> None:
-        """Apply the twist recurrence operation to refresh the internal state grid matrix.
+        """Apply the twist operation to the state grid. 
 
-        This method updates the entire array by combining fragments of adjacent words and
-        applying linear feedback transformations.
+        See the summary for a detailed explanation. 
         """
         # Constants from the video.
         m = 397  # Middle offset distance
@@ -66,29 +63,30 @@ class MersenneTwister:
 
         # 'Twisting' each cell in the state grid.
         for i in range(self.n):
-            # STEP 1: Combine bit fragments from current and next elements.
+            # Combine bit fragments from current and next elements.
             x_comb = (self.state[i] & upper_mask) | (
                 self.state[(i + 1) % self.n] & lower_mask
             )
 
-            # STEP 2: Shift right and conditionally XOR with matrix_a if odd.
+            # Shift right and conditionally XOR with matrix_a if odd.
             x_shift = x_comb >> 1
             if x_comb & 1:
                 x_shift = (x_comb >> 1) ^ matrix_a
 
-            # STEP 3: Combine with the offset middle cell.
+            # Combine with the offset middle cell.
             self.state[i] = (self.state[(i + m) % self.n]) ^ (x_shift)
 
         # Reset pos_index to 0 since we need to calculate a new state grid.
         self.pos_index = 0
 
     def extract_number(self) -> int:
-        """Extract a single 32-bit unsigned integer and apply bitwise tempering masks.
+        """Extract a single integer from the twisted state grid and apply bitwise 
+           tempering masks.
 
         Returns:
-            int: A tempered, highly distributed 32-bit unsigned pseudo-random integer.
+            int: A pseudo-random number. 
         """
-        # Refill/overwrite all 624 cells when the state boundary is reached.
+        # Refill all 624 cells when pos_index reaches the end of the array.
         if self.pos_index >= self.n:
             self.twist()
 
@@ -108,20 +106,18 @@ class MersenneTwister:
 
 
 class Random:
-    """Wrapper class providing structural transformations for random distribution bounding."""
 
     def __init__(self, a: int, b: int, rand_nums: int, seed_val: int = 5489) -> None:
-        """Initialize parameters and scaling properties for generating random numbers in
-        [a, b].
+        """Initialize parameters to generate random numbers in the interval [a, b]. 
 
-        Transforms outputs from the baseline range [0, 1] up into [a, b]
-        using linear scaling: (val * (b - a)) + a.
+        Transforms outputs from the interval [0, 1] up into [a, b]
+        using the scaling (val * (b - a)) + a.
 
         Args:
-            a (int): Lower bound of the output distribution interval.
-            b (int): Upper bound of the output distribution interval.
-            rand_nums (int): Total count of random variables to extract.
-            seed_val (int): Seed number transferred to the Mersenne Twister engine.
+            a (int): Lower bound of the interval.
+            b (int): Upper bound of the interval.
+            rand_nums (int): Total number of random variables to return.
+            seed_val (int): Seed value of the Mersenne Twister engine.
                 Defaults to 5489.
         """
         self.a = a
@@ -133,13 +129,13 @@ class Random:
         """Generate a list of random floating-point values.
 
         Returns:
-            list[float]: A list of size `rand_nums` containing bounded floating-point
-                values distributed within the configured continuous interval [a, b].
+            list[float]: A list of size `rand_nums` of random floating-values in the
+            interval [a, b]. 
         """
         mt = MersenneTwister(self.seed_val)
         mt.twist()
 
-        # Convert 32-bit container spaces into [0, 1] float range, then map to [a, b].
+        # Map 32-bit integers into the interval [0, 1] and then apply the scaling.
         list_nums = [
             (mt.extract_number() / (2**32 - 1)) * (self.b - self.a) + self.a
             for _ in range(self.rand_nums)
@@ -149,7 +145,7 @@ class Random:
 
 
 def main() -> None:
-    """Run a sample using a cryptographic entropy seed."""
+    """Run a sample using a dynamic seed."""
     # Read 4 random bytes and convert them into an unsigned integer.
     dynamic_seed = int.from_bytes(os.urandom(4), byteorder="big")
 
