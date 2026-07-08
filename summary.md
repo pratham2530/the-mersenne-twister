@@ -1,4 +1,7 @@
-# The Theory Behind the Mersenne Twister
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+#  A Mathematical Summary of the Mersenne Twister
 
 ### Hexadecimal Numbers
 In Python, to indicate a number written in hexadecimal, it has the prefix `0x`. Note the capital letters `A-F` are used to represent the numbers `10-15` in decimal.
