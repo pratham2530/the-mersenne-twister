@@ -1,7 +1,7 @@
 """Module providing an implementation of the MT19937 Mersenne Twister.
 
 This module contains the underlying MersenneTwister PRNG and a helper Random class 
-which outputs an arbitrary number of numbers in an interval. 
+which outputs an arbitrary number of numbers in an interval using a seed value. 
 
 Use the summary in the repository to help understand each method properly. 
 """
@@ -11,7 +11,7 @@ import os
 
 class MersenneTwister:
 
-    def __init__(self, seed_val: int = 5489) -> None:
+    def __init__(self, seed_val: int=5489) -> None:
         """Initialize the generator state and seed the grid.
 
         Args:
@@ -106,7 +106,7 @@ class MersenneTwister:
 
 
 class Random:
-
+    
     def __init__(self, a: int, b: int, rand_nums: int, seed_val: int = 5489) -> None:
         """Initialize parameters to generate random numbers in the interval [a, b]. 
 
@@ -145,12 +145,18 @@ class Random:
 
 
 def main() -> None:
-    """Run a sample using a dynamic seed."""
+    """Run two samples: using fixed seed (default value 5489) and dynamic seed values
+       to generate 4 numbers in the interval [0, 3]."""
+    # Using the default seed value. 
+    nums = Random(a=0, b=3, rand_nums=4)
+    print(*nums)
+
+    # Using a dynamic seed value. 
     # Read 4 random bytes and convert them into an unsigned integer.
     dynamic_seed = int.from_bytes(os.urandom(4), byteorder="big")
 
-    nums = Random(a=0, b=3, rand_nums=4, seed_val=dynamic_seed).gen_nums()
-    print(*nums)
+    nums2 = Random(a=0, b=3, rand_nums=4, seed_val=dynamic_seed).gen_nums()
+    print(*nums2)
 
 
 if __name__ == "__main__":
