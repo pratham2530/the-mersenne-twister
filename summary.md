@@ -1,39 +1,21 @@
 # A mathematical summary of the mersenne twister
 
-### Hexadecimal numbers
-In Python, to indicate a number written in hexadecimal, it has the prefix `0x`. Note the capital letters `A-F` are used to represent the numbers `10-15` in decimal.
-
-For example, `0xFFFFFFFF` represents a sequence of 32 ones since `F` is equal to `1111` in binary. This is the largest value an integer can take in Python (32-bit architecture).
-
----
-
-## The mersenne twister
-Python implemented the Mersenne Twister algorithm in C to create the `random()` function. The standard implementation of the algorithm used is **MT19937**, which has a 32-bit word length.
-
-* **MT** stands for Mersenne Twister.
-* **19937** represents the number $2^{19937} - 1$, which is a Mersenne Prime. 
-
-The period of the generator is $2^{19937} - 1$; that is, the generator can generate $2^{19937} - 1$ numbers before repeating.
+# The Mersenne Twister
+Python implemented the Mersenne Twister algorithm in C to create the `random()` function. The standard implementation of the algorithm used is **MT19937**, which has a 32-bit word length. **MT** stands for Mersenne Twister and **19937** represents $2^{19937} - 1$ which is a Mersenne Prime and the period of the generator. 
 
 The following implementation details are derived from the following video: [The Most Popular Pseudo-Random Number Generator - The Mersenne-Twister](https://www.youtube.com/watch?v=TF4PLUcJO5w).
 
 ---
 
 ### Overview of the algorithm
-The Mersenne Twister (specifically MT19937) works by maintaining an internal state array of 624 32-bit unsigned integers. 
+MT19937 works by maintaining an array of 624 32-bit unsigned integers called a state grid. A seed value is used to fill the state grid sequentially.
 
-When initialized with a seed value, it fills this state grid sequentially. Numbers are not generated one-by-one but in grids of 624 numbers. 
+There are three main phases: 
+1. **Initialisation (`state_grid`):** the state grid is filled using a linear recurrence relation. Bitwise operations are used to mix bits to ensure any single bit has an influence on other bits. For example, leftward bit shifts help small changes in the initial seed value to have a large changes in higher-order bits. 
 
-The algorithms consists of three phases:
-1. **Initialisation (`state_grid`):** The internal state grid array is populated using a linear recurrence relation, that is the next number is generated from the previous one. 
+    Using bit shits and XOR operations, information is redistributed across upper and lower bits helping to generate more uniformly random integers. Also, a multiplier constant helps to make small seed values larger and make the system more random; in information theory, this is called increasing entropy. 
 
-    Bitwise operations are used to mix bits to ensure any single bit has an influence on other bits. For example, leftward bit shifts help small changes in the initial seed value to have a large changes in higher-order bits. 
-
-    The bidirectional mixing using bit shits and XOR redistributes information across upper and lower bits, helping the sequence be more "uniformly random" without any loss of information. 
-
-    Also, a multiplier constant helps to make small seed values larger and make the system more random (called increasing the "entropy" of a system). 
-
-2. **Twisting (`twist`):** Once all 624 numbers from the current state have been created, the generator runs a twist on all the numbers. 
+2. **Twisting (`twist`):** once the state grid is filled, the generator runs a twist on all the numbers. 
 
     It iterates through the entire state array, combining the upper bits of one element with the lower bits of the next, multiplying by a specific transition matrix (Matrix $A$), and XORing it with an offset element ($i + 397$). 
     
