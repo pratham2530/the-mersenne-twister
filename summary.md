@@ -96,9 +96,9 @@ Since $0 = 0 \oplus 0$ and $1 = 1 \oplus 0$, specific bits can be first shifted 
 
 ---
 
-### Cryptographic hashes vs. the MT
+### Cryptographic Hashes (CH) vs. the MT
 
-Cryptographic hash functions and the MT both rely on **diffusion**: small changes in the input should lead to large changes in the output.
+Cryptographic Hash functions  (CHFs) and the MT both rely on **diffusion**: small changes in the input should lead to large changes in the output.
 
 In addition, both use bitwise operations including:
 
@@ -111,13 +111,13 @@ In addition, both use bitwise operations including:
 However, there are three main system trade-offs: 
 
 1. * The tempering operation in the MT is linear and invertible.
-   * Cryptographic hash functions use non-linear step functions and compression. 
+   * CHFs use non-linear step functions and compression. 
 
 2. * The MT needs a fixed state array size. 
-   * A cryptographic hash accepts an arbitrary-length byte stream. 
+   * A CH accepts an arbitrary-length byte stream. 
 
 4. * The MT relies on linear recurrences which is optimal for CPU execution loops making it useful for Monte-carlo simulations.
-   * Cryptographic hash functions use multiple rounds of mixing to increase security. 
+   * CHFs use multiple rounds of mixing to increase security. 
 
 ---
 
