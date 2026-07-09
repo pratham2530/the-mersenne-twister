@@ -1,4 +1,4 @@
-# A mathematical summary of the Mersenne Twister (MT)
+# A summary of the Mersenne Twister (MT)
 
 # Introduction
 Python implemented the MT in C to create the `random()` function. The standard implementation of the algorithm used is **MT19937**, which has a 32-bit word length. **19937** represents $2^{19937} - 1$ which is a Mersenne Prime and the period of the generator. 
@@ -139,29 +139,21 @@ $$
 
 If $v = (v_{31}, v_{30}, \dots, v_0)$ is a row vector then $vA = (a_{31}v_{0}, v_{31} + a_{30}v_0, \dots, v_1 + a_0v_0)$. If $v_0 = 0$ then $vA = (0, v_{31}, \dots, v_1)$ is equivalent to the bit-wise shift `x_shift = x_comb >> 1`. 
 
-However, if $v_0 = 1$ then $vA = (a_{31}, v_{31} + a_{30}, \dots, v_1 + a_0) = (a_{31}, a_{30}, \dots, a_0) + (0, v_{31}, \dots, v_0)$ which is equivalent to `x_shift = (x_comb >> 1) ^ matrix_a`. Hence `matrix_a` is the last row vector in matrix $A$ (this might be a confusing name). 
-
-In the final step of the `twist()` method, `x_shift` is mixed with a different state. In a traditional Generalised Feedback Shift Register (GFSR), the generator uses the following recurrence relation: 
+However, if $v_0 = 1$ then $vA = (a_{31}, v_{31} + a_{30}, \dots, v_1 + a_0) = (a_{31}, a_{30}, \dots, a_0) + (0, v_{31}, \dots, v_0)$ which is equivalent to `x_shift = (x_comb >> 1) ^ matrix_a`. Hence `matrix_a` is the last row vector in matrix $A$ (this might be a confusing name since `matrix_a` is a row of matrix $A$). In the final step of the `twist()` method, `x_shift` is mixed with a different state. In a traditional Generalised Feedback Shift Register (GFSR), the generator uses the following recurrence relation: 
 
 $$
 x_{i+n} = x_{i+m} \oplus (x_i \cdot A).
 $$
 
-This is equivalent to `self.state[i] = (self.state[(i + m) % self.n]) ^ (x_shift)`. 
+which equivalent to `self.state[i] = (self.state[(i + m) % self.n]) ^ (x_shift)`. 
 
-However, in a GFSR $A$ can be an arbitrary, dense (contain many 1s) matrix. Multiplying a 32-bit vector ($x_i$) by a dense matrix translates into 32 distinct bitwise shift-and-add (XOR) loop iterations. Repeating this 624 times is very slow. 
-
-The matrix $A$ in the MT is designed so matrix multiplication can be translated into 1 bitwise shift-and-add loop iteration which is processed by the CPU almost instantly. 
+However, in a GFSR $A$ can be an arbitrary, dense (contain many 1s) matrix. Multiplying a 32-bit vector ($x_i$) by a dense matrix translates into 32 distinct bitwise shift-and-add (XOR) loop iterations. Repeating this 624 times is very slow. The matrix $A$ in the MT is designed so matrix multiplication can be translated into 1 bitwise shift-and-add loop iteration which is processed by the CPU almost instantly. 
 
 #### Why is the period of each state $2^{19937} - 1$?
 
-Computing the characteristic polynomial $\det(A - \lambda I)$ leads to why the period of each state is $2^{19937} - 1$. Let $B = A - \lambda$. 
+First compute the characteristic polynomial $\det(A - \lambda I)$. Let $B = A - \lambda$. Using recursion, $\det(B) = \det(B_{31}) = - \lambda \det(B_{30}) - a_{31}$ where $\det(B_i)$ is the bottom right sub-matrix of $B$ of dimension $(i + 1) \times (i + 1)$. Since $-1_{\mathbb{F}} = 1_{\mathbb{F}}$, $\det(B_{31}) = \lambda \det(B_{30}) + a_{31}$ so $\det(B) = \lambda^{32} + a_0 \lambda^{31} + \dots + a_{31}$. 
 
-Then using recursion, $\det(B) = \det(B_{31}) = - \lambda \det(B_{30}) - a_{31}$ where $\det(B_i)$ is the bottom right sub-matrix of $B$ of dimension $(i + 1) \times (i + 1)$. Since $-1_{\mathbb{F}} = 1_{\mathbb{F}}$, $\det(B_{31}) = \lambda \det(B_{30}) + a_{31}$ so $\det(B) = \lambda^{32} + a_0 \lambda^{31} + \dots + a_{31}$. 
-
-However, $A$ acts locally since it acts on a vector of length 32. Consider, the "global" matrix $T$ which takes as input the 624 integers at once i.e. a vector of length $32 \times 624 = 19968$. 
-
-Then $T$ is the following matrix: 
+However, $A$ acts locally since it acts on a vector of length 32. Consider, the "global" matrix $T$ which takes as input the 624 integers at once i.e. a vector of length $32 \times 624 = 19968$. The idea is to find the characteristic polynomial of $T$ using a similar recursion. 
 
 $$
 T = \begin{pmatrix} 
@@ -173,19 +165,19 @@ B_{0} & B_{1} & B_{2} & \cdots & B_{623}
 \end{pmatrix}
 $$ 
 
-where $B_i$ is a ($32 \times 32$)-matrix for each $i$. By using a similar recursion when computing the characteristic polynomial of $A$, the characteristic polynomial of $T$ is 
+where $B_i$ is a ($32 \times 32$)-matrix for each $i$. The characteristic polynomial of $T$ is 
 
 $$
 \det(T - \lambda I) = \det \left(\lambda^{624} I + B_{623}\lambda^{623} + \dots + B_1\lambda + B_0 \right)
 $$ 
 
-where negative signs are dropped. 
+where negative signs are dropped (1_{\mathbb{F}&#95;2} = -1_{\mathbb{F}&#95;2}). 
 
 ##### Linking $T$ to the `twist()` method
 
-Since each number is twisted using exactly three integers from the original state grid, only $B_0$, $B_1$ (links to step 1 in the `twist()` method) and $B_{397}$ (links to step 3 in the `twist()` method) are non-zero. 
-
-It helps to understand what $\lambda$ represents in the system. In a feedback system over a finite field, $\lambda$ is a time-advance operator, that is $x_{i + 1} = \lambda x_i$ where $x_i$ is the state at time $i$.  
+In order to compute the above determinant, it's useful to understand the three operations in the `twist()` method in more detail. 
+ 
+Since each number is twisted using exactly three integers from the original state grid, only $B_0$, $B_1$ (links to step 1 in the `twist()` method) and $B_{397}$ (links to step 3 in the `twist()` method) are non-zero. Note that in a feedback system over a finite field, $\lambda$ is a time-advance operator, that is $x_{i + 1} = \lambda x_i$ where $x_i$ is the state at time $i$.
 
 In step 1, `x_comb = (self.state[i] & upper_mask) | (self.state[(i + 1) % self.n] & lower_mask)`. Using matrices, this is equivalent to $x_i P_0 + x_{i + 1} P_1 = x_i P_0 + x_i \lambda P_1 = x_i (P_0 + \lambda P_1)$ where $P_0$ and $P_1$ are the upper and lower bit-masks. In matrix notation, 
 
@@ -211,11 +203,7 @@ P_1 = \begin{pmatrix}
 \end{pmatrix}.
 $$ 
 
-Now globally, $B_0 = A P_0$ represents taking the Most Significant Bit (MSB) of the current word and applying the twist matrix $A$. 
-
-$B_1 = A P_1$ represents taking the Least Significant Bits (LSBs) of the next word and applying the twist matrix $A$. 
-
-For ease of notation, let $B_0 + \lambda B_1 = A(P_0 + \lambda P_1) = A R(\lambda)$ then 
+Gllobally, $B_0 = A P_0$ represents taking the Most Significant Bit (MSB) of the current word and applying the twist matrix $A$. $B_1 = A P_1$ represents taking the Least Significant Bits (LSBs) of the next word and applying the twist matrix $A$. For ease of notation, let $B_0 + \lambda B_1 = A(P_0 + \lambda P_1) = A R(\lambda)$ then 
 
 $$
 \det(T - \lambda I) = \det(I_{32}(\lambda^{624} + \lambda^{397}) + AR(\lambda))
@@ -232,18 +220,16 @@ a_{31} & \lambda a_{30} & \lambda a_{29} & \dots & \lambda a_0
 \end{pmatrix}
 $$
 
-In step 3, `self.state[i] = (self.state[(i + m) % self.n]) ^ (x_shift)` which is equivalent to the determinant equation derived where `x_shift` is $A R(\lambda)$. `self.state[(i + m) % self.n])` is equivalent to $B_{397} = \lambda^{397} I_{32}$ since the index has moved to position `(i + m)` in `self.state`. 
-
-Lastly, `self.state[i]` represents $\lambda^{624}I_{32}$. Since subtraction is equivalent to addition in $\mathbb{F}_2$, the code is a rearrangement of: 
+In step 3, `self.state[i] = (self.state[(i + m) % self.n]) ^ (x_shift)` which is equivalent to the determinant equation derived where `x_shift` is $A R(\lambda)$. `self.state[(i + m) % self.n])` is equivalent to $B_{397} = \lambda^{397} I_{32}$ since the index has moved to position `(i + m)` in `self.state`. Lastly, `self.state[i]` represents $\lambda^{624}I_{32}$. Since subtraction is equivalent to addition in $\mathbb{F}_2$, the code is a rearrangement of: 
 
 $$
-\lambda^{624} I_{32} \cdot x_i \oplus \lambda^{397} I_{32} \cdot x_i \oplus A R(\lambda) \cdot x_i = 0.
+\lambda^{624} I_{32} \cdot x_i \oplus \lambda^{397} I_{32} \cdot x_i \oplus A R(\lambda) \cdot x_i = 0
 $$ 
 
-This matches with the matrix expression inside the determinant. 
+which matches with the matrix expression inside the determinant. 
 
 ##### Finding the characteristic polynomial of $T$
-It's time to compute the determinant at last. Now, letting $\alpha = \lambda^{624} + \lambda^{397}$, $I_{32}(\lambda^{624} + \lambda^{397}) + AR(\lambda)$ is the following matrix: 
+Now, letting $\alpha = \lambda^{624} + \lambda^{397}$, $I_{32}(\lambda^{624} + \lambda^{397}) + AR(\lambda)$ is the matrix defined as: 
 
 $$
 \begin{pmatrix}
@@ -268,14 +254,12 @@ $$
 \det(T - \lambda I) = \lambda^{19968} + \lambda^{12704} + \sum_{k=0}^{31} a_k \lambda^{31-k} \alpha^k.
 $$ 
 
-Finally, if it's shown the degree of the characteristic polynomial is primitive, then $T$ will cycle through each of the $2^d - 1$ possible non-zero bit state configurations where $d$ is the degree of the polynomial. 
+Finally, if it's shown the degree of the characteristic polynomial is primitive then $T$ will cycle through each of the $2^d - 1$ possible non-zero bit state configurations where $d$ is the degree of the polynomial. Note the degree in the polynomial is 19968 and not 19937. In the first step of the `twist()` method, the right 31 bits of the first integer is not used since it is immediately masked with the upper bit-mask. 
 
-Note the degree in the polynomial is 19968 and not 19937. In the first step of the `twist()` method, the right 31 bits of the first integer is not used since it is immediately masked with the upper bit-mask. 
-
-Hence, these 31 bits do not influence the global system. Mathematically, this is equivalent to a 31-dimensional null space. In this context, the polynomial over $\mathbb{F}_2$ governing the system is $P(\lambda)$, where $\lambda^{31} P(\lambda) = \det(T - \lambda I)$. Subtracting 31 from 19968 gives the degree of the polynomial $P(\lambda)$ as 19937 which is known to be a Mersenne prime. 
+Hence, these 31 bits do not influence the system globally. Hence, the polynomial over $\mathbb{F}_2$ governing the system is $P(\lambda)$, where $\lambda^{31} P(\lambda) = \det(T - \lambda I)$. Subtracting 31 from 19968 gives the degree of the polynomial $P(\lambda)$ as 19937 (this should be familiar). 
 
 ##### Showing the characteristic polynomial is primitive
 
-Consider the (Galois) field $F_{2^n}$. The size of the multiplicative group is $2^n - 1$ since $0$ is not invertible. By Lagrange's or Fermat's theorem, the order of any element must be $1$ or $2^n - 1$. Since $\lambda \neq 1$, it follows $\{1, \lambda, \lambda^2, \dots, \lambda^{2^{n} - 1}\}$ are distinct for $\lambda \neq 1$. 
+Consider the (Galoid) field $F_{2^n}$. The size of the multiplicative group is $2^n - 1$ since $0$ is not invertible. By Lagrange's or Fermat's theorem, the order of any element must be $1$ or $2^n - 1$. Since $\lambda \neq 1$, it follows $\{1, \lambda, \lambda^2, \dots, \lambda^{2^{n} - 1}\}$ are distinct for $\lambda \neq 1$. 
 
 Remember $x_{i + 1} = \lambda x_i$ so for non-zero states, $\{x_0, \lambda x_0, \dots, \lambda^{2^{19937} - 1} x_0\}$ are the $2^{19937}$ different states each integer takes before repeating.
