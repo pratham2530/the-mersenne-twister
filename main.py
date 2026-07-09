@@ -1,3 +1,6 @@
+from tools import Random
+
+
 def main():
     """Run two samples: using default fixed seed and dynamic seed values
        to generate 4 numbers in interval [0, 3]."""
