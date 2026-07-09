@@ -1,82 +1,73 @@
-"""Module providing an implementation of the MT19937 Mersenne Twister.
-
-This module contains the underlying MersenneTwister PRNG and a helper Random class 
-which outputs an arbitrary number of numbers in an interval using a seed value. 
-
-Use the summary in the repository to help understand each method properly. 
-"""
-
 import os
 
 
 class MersenneTwister:
-
     def __init__(self, seed_val: int=5489) -> None:
         """Initialize the generator state and seed the grid.
-
-        Args:
-            seed_val (int): The initial value used to seed the state_grid. 
-                Defaults to 5489.
         """
-        # The size of the state grid.
-        self.n = 624
+        # size of state grid
+        self.n = 624           
         self.state = [0] * self.n
-
-        # Track position inside the 624-cell grid (forces initial twist).
+        
+        # force initial twist by setting to self.n
         self.pos_index = self.n
         self.state_grid(seed_val)
 
     def state_grid(self, seed_val: int) -> None:
-        """Populate the state grid using a Knuth multiplier.
-
-        Args:
-            seed_val (int): The initial value used to seed the state_grid. 
+        """Populate the state grid.
         """
-        # Fill first cell with the seed value as a 32-bit integer.
+        # fill first cell with seed value
         self.state[0] = seed_val & 0xFFFFFFFF
 
-        # Seed multiplier constant.
+        # seed multiplier constant
         f = 1812433253
 
-        # Updating each cell in the state grid.
+        # update each cell in the state grid
         for i in range(1, self.n):
             self.state[i] = (
                 self.state[i - 1]
                 ^ (
                     self.state[i - 1]
-                    >> 30  # Isolate highest bits to influence lower-order bits.
+                     # isolate highest bits to influence lower-order bits
+                    >> 30        
                 )
-                * f  # Cause large bit-shifts so next cells flip unpredictably.
-                + i  # Forces next state to be non-zero if previous state is zero.
+                # cause large bit-shifts so next cells flip unpredictably
+                * f
+                # force next state to be non-zero if previous state is zero
+                + i                   
             ) & 0xFFFFFFFF
 
     def twist(self) -> None:
         """Apply the twist operation to the state grid. 
-
-        See the summary for a detailed explanation. 
         """
-        # Constants from the video.
-        m = 397  # Middle offset distance
-        matrix_a = 0x9908B0DF
-        upper_mask = 0x80000000  # Isolates the top, 32nd, bit.
-        lower_mask = 0x7FFFFFFF  # Isolates the lower 31 bits.
+        # constants from video
+        # middle offset distance
+        m = 397
 
-        # 'Twisting' each cell in the state grid.
+        # bottom row of matrix A (see summary.md)
+        matrix_a = 0x9908B0DF
+        
+        # isolate the top bit
+        upper_mask = 0x80000000
+
+        # isolate the lower 31 bits
+        lower_mask = 0x7FFFFFFF 
+
+        # twisting each cell in the state grid
         for i in range(self.n):
-            # Combine bit fragments from current and next elements.
+            # combine bit fragments from current and next elements
             x_comb = (self.state[i] & upper_mask) | (
                 self.state[(i + 1) % self.n] & lower_mask
             )
 
-            # Shift right and conditionally XOR with matrix_a if odd.
             x_shift = x_comb >> 1
             if x_comb & 1:
                 x_shift = (x_comb >> 1) ^ matrix_a
 
-            # Combine with the offset middle cell.
+            # combine with the offset middle cell
             self.state[i] = (self.state[(i + m) % self.n]) ^ (x_shift)
 
-        # Reset pos_index to 0 since we need to calculate a new state grid.
+        # reset pos_index to calcualate new state grid
         self.pos_index = 0
 
     def extract_number(self) -> int:
@@ -86,39 +77,36 @@ class MersenneTwister:
         Returns:
             int: A pseudo-random number. 
         """
-        # Refill all 624 cells when pos_index reaches the end of the array.
+        # refill all state grid if pos_index reaches end
         if self.pos_index >= self.n:
             self.twist()
 
-        # Select a twisted number from the state grid.
         raw_num = self.state[self.pos_index]
 
-        # TEMPERING: Apply four bitwise mixing operations to increase randomness.
-        y = raw_num ^ (raw_num >> 11)  # Mix unchanged high bits into low bits.
+        # apply bitwise mixing operations to increase randomness
+        # mix unchanged high bits into low bits
+        y = raw_num ^ (raw_num >> 11)
         y = y ^ ((y << 7) & 0x9D2C5680)
         y = y ^ ((y << 15) & 0xEFC60000)
         y = y ^ (y >> 18)
 
-        # Move index to the next grid element for subsequent call.
+        # extracting next element for next random number
         self.pos_index += 1
 
         return y
 
 
 class Random:
-    
     def __init__(self, a: int, b: int, rand_nums: int, seed_val: int = 5489) -> None:
-        """Initialize parameters to generate random numbers in the interval [a, b]. 
+        """Initialise parameters to generate random numbers in the interval [a, b]. 
 
-        Transforms outputs from the interval [0, 1] up into [a, b]
-        using the scaling (val * (b - a)) + a.
+        Scales outputs from the interval [0, 1] into [a, b] using (val * (b - a)) + a.
 
         Args:
-            a (int): Lower bound of the interval.
-            b (int): Upper bound of the interval.
-            rand_nums (int): Total number of random variables to return.
-            seed_val (int): Seed value of the Mersenne Twister engine.
-                Defaults to 5489.
+            a (int): lower bound of the interval.
+            b (int): upper bound of the interval.
+            rand_nums (int): number of random variables to return.
+            seed_val (int): defaults to 5489. 
         """
         self.a = a
         self.b = b
@@ -126,38 +114,18 @@ class Random:
         self.seed_val = seed_val
 
     def gen_nums(self) -> list[float]:
-        """Generate a list of random floating-point values.
+        """Generate list of random floating-point values.
 
         Returns:
-            list[float]: A list of size `rand_nums` of random floating-values in the
-            interval [a, b]. 
+            list[float]: random floating-values in the interval [a, b]. 
         """
         mt = MersenneTwister(self.seed_val)
         mt.twist()
 
-        # Map 32-bit integers into the interval [0, 1] and then apply the scaling.
+        # map 32-bit ints into [0, 1] and scale
         list_nums = [
             (mt.extract_number() / (2**32 - 1)) * (self.b - self.a) + self.a
             for _ in range(self.rand_nums)
         ]
 
         return list_nums
-
-
-def main() -> None:
-    """Run two samples: using fixed seed (default value 5489) and dynamic seed values
-       to generate 4 numbers in the interval [0, 3]."""
-    # Using the default seed value. 
-    nums = Random(a=0, b=3, rand_nums=4)
-    print(*nums)
-
-    # Using a dynamic seed value. 
-    # Read 4 random bytes and convert them into an unsigned integer.
-    dynamic_seed = int.from_bytes(os.urandom(4), byteorder="big")
-
-    nums2 = Random(a=0, b=3, rand_nums=4, seed_val=dynamic_seed).gen_nums()
-    print(*nums2)
-
-
-if __name__ == "__main__":
-    main()
