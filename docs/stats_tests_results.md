@@ -12,6 +12,8 @@ Before updating the `Random` and `Test` classes, the generator failed several in
 4. A Kolmogorov-Smirnov (KS) test showed weak results ($D = 0.05$, $p = 0.08$).
 5. The 2D scatter plot showed clear line banding, meaning values were repeating.
 
+![](images/Figure_8.png)
+
 At first, I thought the generator was broken. 
 Then, instatiating a single generator once in the `Random` and `Test` classes passed the tests. 
 The problem was the generator was not holding its state since a new generator was instantiated when a sample was called. 
