@@ -2,6 +2,13 @@
 
 A python implementation of the **MT19937** PRNG used in Python's built-in `random` module with a `Random` helper class for sampling numbers from an arbitrary interval `[a, b]`.
 
+### UPDATE: 
+
+*17/07/2026*: 
+- Added a burn-in after instantiating the PRNG in Random to improve sample randomness. 
+- Moved instantiation from `gen_nums()` to `__init__()` to improve both running and statistical performance by ensuring the current state changes.
+- Remove `twist()` in `gen_nums()` to ensure only `extract_number()` twists a new state-grid. 
+
 ## Why this exists
 
 I wanted to know how Python generates random numbers. In addition, this projcet contains a full write-up, [`summary.md`](./summary.md) covering *why* each step exists, the the linear algebra behind the `twist()` step and a derivation of the generator's period of $2^{19937} - 1$.
