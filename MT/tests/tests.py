@@ -207,64 +207,64 @@ class Tests:
             raise ValueError("Dimension must be 2 or 3.")
 
 
-def check_convergence_rate(self, sample_sizes=None, num_repeats=25, plot=False):
-        """
-        Measures how quickly the generator's error shrinks as sample size increases.
-        
-        Uses sequential pairs the sample as coordinates to estimate the area of a quadrant. 
-        Tracks mean absolute error (MAE) across varying sample sizes, 
-        fits a regression line to the log-log error curve, and 
-        verifies if the resulting error decay slope scales close to -0.5.
-        """
-        if sample_sizes is None:
-            sample_sizes = [100, 300, 1_000, 3_000, 10_000, 30_000]
+    def check_convergence_rate(self, sample_sizes=None, num_repeats=25, plot=False):
+            """
+            Measures how quickly the generator's error shrinks as sample size increases.
             
-        avg_errors = []
-        true_value = np.pi / 4
-        max_size = max(sample_sizes)
-
-        # Performance: pre-allocate a matrix to track absolute errors in all tests. 
-        error_matrix = np.zeros((len(sample_sizes), num_repeats))
-
-        for rep in range(num_repeats):
-            # Performance: draw a large sample once to slice from.
-            stream = np.array(self.generate_sample(max_size * 2))
-            x_stream = stream[:max_size]
-            y_stream = stream[max_size:]
-            
-            # Perfomance: pre-compute Euclidean spatial distances. 
-            distances_squared = x_stream**2 + y_stream**2
-            
-            for idx, N in enumerate(sample_sizes):
-                inside_circle = np.sum(distances_squared[:N] <= 1.0)
-                mc_estimate = inside_circle / N
-                error_matrix[idx, rep] = abs(mc_estimate - true_value)
+            Uses sequential pairs the sample as coordinates to estimate the area of a quadrant. 
+            Tracks mean absolute error (MAE) across varying sample sizes, 
+            fits a regression line to the log-log error curve, and 
+            verifies if the resulting error decay slope scales close to -0.5.
+            """
+            if sample_sizes is None:
+                sample_sizes = [100, 300, 1_000, 3_000, 10_000, 30_000]
                 
-        # Average the errors across all trials to smooth out random variance. 
-        avg_errors = np.mean(error_matrix, axis=1)
-            
-        log_N = np.log(sample_sizes)
-        log_E = np.log(avg_errors)
+            avg_errors = []
+            true_value = np.pi / 4
+            max_size = max(sample_sizes)
+    
+            # Performance: pre-allocate a matrix to track absolute errors in all tests. 
+            error_matrix = np.zeros((len(sample_sizes), num_repeats))
 
-        # Perform linear regression in log-log space to extract the slope. 
-        slope, intercept = np.polyfit(log_N, log_E, 1)
-        
-        if plot: 
-            plt.figure(figsize=(8, 5))
-            plt.loglog(sample_sizes, avg_errors, "o-", label=f"Empirical Slope: {slope:.3f}", color="crimson")
+            for rep in range(num_repeats):
+                # Performance: draw a large sample once to slice from.
+                stream = np.array(self.generate_sample(max_size * 2))
+                x_stream = stream[:max_size]
+                y_stream = stream[max_size:]
+                
+                # Perfomance: pre-compute Euclidean spatial distances. 
+                distances_squared = x_stream**2 + y_stream**2
             
-            # Shift the theoretical line to align with the data for comparison.
-            theoretical_line = np.exp(intercept) * (1 / np.sqrt(sample_sizes))
-            plt.loglog(sample_sizes, theoretical_line, "--", label="Theoretical $1/\\sqrt{N}$ (Slope: -0.500)", color="black", alpha=0.7)
-            
-            plt.title("Monte Carlo Convergence Rate Check")
-            plt.xlabel("Sample Size (N)")
-            plt.ylabel("Mean Absolute Error")
-            plt.grid(True, which="both", linestyle="--", alpha=0.5)
-            plt.legend()
-            plt.show(block=True)
+                for idx, N in enumerate(sample_sizes):
+                    inside_circle = np.sum(distances_squared[:N] <= 1.0)
+                    mc_estimate = inside_circle / N
+                    error_matrix[idx, rep] = abs(mc_estimate - true_value)
+                    
+            # Average the errors across all trials to smooth out random variance. 
+            avg_errors = np.mean(error_matrix, axis=1)
+                
+            log_N = np.log(sample_sizes)
+            log_E = np.log(avg_errors)
+    
+            # Perform linear regression in log-log space to extract the slope. 
+            slope, intercept = np.polyfit(log_N, log_E, 1)
         
-        return float(slope)
+            if plot: 
+                plt.figure(figsize=(8, 5))
+                plt.loglog(sample_sizes, avg_errors, "o-", label=f"Empirical Slope: {slope:.3f}", color="crimson")
+                
+                # Shift the theoretical line to align with the data for comparison.
+                theoretical_line = np.exp(intercept) * (1 / np.sqrt(sample_sizes))
+                plt.loglog(sample_sizes, theoretical_line, "--", label="Theoretical $1/\\sqrt{N}$ (Slope: -0.500)", color="black", alpha=0.7)
+                
+                plt.title("Monte Carlo Convergence Rate Check")
+                plt.xlabel("Sample Size (N)")
+                plt.ylabel("Mean Absolute Error")
+                plt.grid(True, which="both", linestyle="--", alpha=0.5)
+                plt.legend()
+                plt.show(block=True)
+            
+            return float(slope)
 
 
 if __name__ == "__main__": 
