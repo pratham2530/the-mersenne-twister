@@ -5,6 +5,9 @@ Before updating the `Random` and `Test` classes, the generator failed several in
 
 1. The Chi-squared test returned a very low p-value.
 2. The p-value distribution dipped right at 1.
+
+![](images/Figure_1.png)
+
 3. Changing the denominator to $2^{32}$ instead of $2^{32} - 1$ in `gen_nums()` to output numbers in the $[0, 1)$ interval did not fix the results.
 4. A Kolmogorov-Smirnov (KS) test showed weak results ($D = 0.05$, $p = 0.08$).
 5. The 2D scatter plot showed clear line banding, meaning values were repeating.
@@ -20,23 +23,28 @@ The following changes improved code performance:
 3. Pre-allocating arrays to reduce memory. 
 
 ---
-
 # Results
+
+![](images/Figure_7.png)
 
 ## Test 1: Chi-Squared
 Checks numbers are generated uniformly by splitting the sample into equal-sized sub-intervals (bins). 
 
-### Result
-
 ## Test 2: Kolmogorov-Smirnov (KS) Test
 Checks if the p-values generated from the Chi-Squared test follows a Uniform[0, 1] distribution. 
+
+![](images/Figure_2.png)
+
+![](images/Figure_3.png)
+
+![](images/Figure_4.png)
 
 A strong generator will have a small distance ($D$) and a high overall p-value. 
 $D$ is the maximum vertical gap between the empirical distribution and the Uniform[0, 1] distribution. 
 Clustering of p-values around: 
 1. 0 - numbers are not generated uniformly.
 2. 1 - numbers are generated perfectly uniformly. True randomness is messy hence we should expect some samples to have lower p-values.
-3. 0.5 - the same sequence or overlapping subsequences are generated for each sample indicating an issue with how the state is being updated. 
+3. 0.5 - the same sequence or overlapping subsequences are generated for each sample indicating an issue with how the state is being updated.
 
 ## Test 3: Serial Correlation
 Checks for linear correlations between consecutive values in the sequence. 
@@ -93,6 +101,9 @@ $$\text{Var}(R) = \frac{2n_1n_2}{n} - \frac{4n_1^2n_2^2}{n(n-1)} + \frac{2(n-2)n
 
 ## Test 5: 2D/3D Plot
 Plots consecutive sample values as different co-ordinates. 
+
+![](images/Figure_5.png)
+
 For a strong generator, in two dimensions a uniformly filled in square should be plotted. 
 This allows the user to quickly evaluate serial correlation and runs tests above visually. 
 
@@ -124,4 +135,7 @@ Taking logs on both sides yields:
 $$\ln(\text{MAE}) = -0.5 \ln(N) + \ln(\sigma).$$
   
 Hence, fitting a linear regression line to our log-log error curve should yield an empirical slope close to $-0.5$. 
+
+![](images/Figure_6.png)
+
 Otherwise, this implies a problem in how numbers are generated uniformly and independently as the sample size increases.
