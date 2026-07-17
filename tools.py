@@ -112,20 +112,24 @@ class Random:
         self.b = b
         self.rand_nums = rand_nums
         self.seed_val = seed_val
+        self.mt = MersenneTwister(self.seed_val)
 
-    def gen_nums(self) -> list[float]:
+        # Burn-in: discard 10_000 numbers generated. 
+        for _ in range(10_000):
+            self.mt.extract_number()
+
+    def gen_nums(self, size=None) -> list[float]:
         """Generate list of random floating-point values.
 
         Returns:
             list[float]: random floating-values in the interval [a, b]. 
         """
-        mt = MersenneTwister(self.seed_val)
-        mt.twist()
-
-        # map 32-bit ints into [0, 1] and scale
+        count = size if size is not None else self.rand_nums
+        
+        # Convert 32-bit container spaces into [0, 1] float range, then map to [a, b].
         list_nums = [
-            (mt.extract_number() / (2**32 - 1)) * (self.b - self.a) + self.a
-            for _ in range(self.rand_nums)
+            (self.mt.extract_number() / 2**32) * (self.b - self.a) + self.a
+            for _ in range(count)
         ]
 
         return list_nums
