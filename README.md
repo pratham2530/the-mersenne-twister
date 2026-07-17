@@ -11,15 +11,16 @@ A python implementation of the **MT19937** PRNG used in Python's built-in `rando
 
 ## Why this exists
 
-I wanted to know how Python generates random numbers. In addition, this projcet contains a full write-up, [`summary.md`](./summary.md) covering *why* each step exists, the the linear algebra behind the `twist()` step and a derivation of the generator's period of $2^{19937} - 1$.
+I wanted to know how Python generates random numbers. In addition, this projcet contains a full write-up, [`summary.md`](./summary.md) covering *why* each step exists, the the linear algebra behind the `twist()` step and a derivation of the generator's period of $2^{19937} - 1$. In addition, there are statistical tests run on PRNG with a write-up `stats_test_results.md` covering more details on each test and results. 
 
 ## Features
 
-- Full MT19937 implementation (seeding, twisting and tempering a 624-word state grid). 
+- Full MT19937 implementation (seeding, twisting and tempering a 624-word state grid) in `tools.py`. 
 - `Random` helper class for generating `n` uniform floats in the interval `[a, b]`. 
 - Supports both a fixed default seed and a dynamically generated seed. 
-- Summary of the main concepts and maths behind the algorithm. 
-- Statistical validation of generator with a summary including derivations of formulae and results. 
+- Summary of the main concepts and maths behind the algorithm  in [`summary.md`](./summary.md). 
+- Statistical validation of generator in `stats_tests.py`. 
+- Summary of statistical tests including derivations of formulae and results in `stats_test_results.md`. 
 
 ## Installation
 
@@ -57,7 +58,13 @@ raw_ints = [mt.extract_number() for _ in range(5)]
 ### Running the demo
 
 ```bash
-python main.py
+python demo.py
+```
+
+### Running the validation
+
+```bash
+python validation.py
 ```
 
 ## How it works
