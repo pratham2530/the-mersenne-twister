@@ -152,7 +152,7 @@ class Tests:
         # runs = 1 + number of switches between 0s and 1s. 
         runs = 1 + np.sum(np.abs(np.diff(binary_seq)))
         
-        # See README for derivations. 
+        # See stats_tests_results.md for derivations. 
         expected_runs = ((2 * n1 * n2) / n) + 1
         variance = (2 * n1 * n2 * (2 * n1 * n2 - n)) / (n**2 * (n - 1))
         
