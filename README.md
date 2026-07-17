@@ -2,25 +2,23 @@
 
 A python implementation of the **MT19937** PRNG used in Python's built-in `random` module with a `Random` helper class for sampling numbers from an arbitrary interval `[a, b]`.
 
-### UPDATE: 
-
-*17/07/2026*: 
-- Added a burn-in after instantiating the PRNG in Random to improve sample randomness. 
-- Moved instantiation from `gen_nums()` to `__init__()` to improve both running and statistical performance by ensuring the current state changes.
-- Remove `twist()` in `gen_nums()` to ensure only `extract_number()` twists a new state-grid. 
-
 ## Why this exists
 
 I wanted to know how Python generates random numbers. In addition, this projcet contains a full write-up, [`summary.md`](./summary.md) covering *why* each step exists, the the linear algebra behind the `twist()` step and a derivation of the generator's period of $2^{19937} - 1$. In addition, there are statistical tests run on PRNG with a write-up `stats_test_results.md` covering more details on each test and results. 
 
 ## Features
 
-- Full MT19937 implementation (seeding, twisting and tempering a 624-word state grid) in `tools.py`. 
+- Full MT19937 implementation (seeding, twisting and tempering a 624-word state grid). 
 - `Random` helper class for generating `n` uniform floats in the interval `[a, b]`. 
 - Supports both a fixed default seed and a dynamically generated seed. 
-- Summary of the main concepts and maths behind the algorithm  in [`summary.md`](./summary.md). 
-- Statistical validation of generator in `stats_tests.py`. 
-- Summary of statistical tests including derivations of formulae and results in `stats_test_results.md`. 
+- Summary of the main concepts and maths behind the algorithm. 
+- Statistical validation of generator. 
+- Empirical results of statistical tests and additional mathematical backgroud.
+
+Example plots from statistical tests: 
+
+![](/docs/images/Figure_5.png)
+![](/docs/images/Figure_6.png)
 
 ## Installation
 
@@ -81,7 +79,25 @@ For the full explanation see [`summary.md`](./summary.md).
 
 ```
 .
-├── main.py       # demo script
-├── tools.py      # MersenneTwister and Random classes
-└── summary.md    # algorithm walkthrough and mathematical background
+├── docs/                      # Technical documentation and analysis
+│   ├── images/                # Generated plots and figures
+│   ├── stats_tests_results.md # Empirical results of statistical testing
+│   └── summary.md             # Algorithm walkthrough and mathematical background
+├── examples/                  
+│   └── demo.py                # Generating a sample using the Random class
+├── mt/                        
+│   ├── __init__.py            
+│   └── tools.py               # Mersenne Twister and Random implementations
+├── validation/                # Statistical verification suite
+│   ├── run_validation.py      # Test runner script
+│   └── stats_tests.py         # Implementations of statistical tests
+├── LICENSE                    
+└── README.md                  
 ```
+
+### UPDATES: 
+
+*17/07/2026*: 
+- Added a burn-in after instantiating the PRNG in Random to improve sample randomness. 
+- Moved instantiation from `gen_nums()` to `__init__()` to improve both running and statistical performance by ensuring the current state changes.
+- Remove `twist()` in `gen_nums()` to ensure only `extract_number()` twists a new state-grid. 
