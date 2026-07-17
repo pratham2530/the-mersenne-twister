@@ -15,10 +15,11 @@ I wanted to know how Python generates random numbers. In addition, this projcet 
 
 ## Features
 
-- Full MT19937 implementation (seeding, twisting and tempering a 624-word state grid)
-- `Random` helper class for generating `n` uniform floats in the interval `[a, b]`
-- Supports both a fixed default seed and a dynamically generated seed
-- Summary of the main concepts and maths behind the algorithm
+- Full MT19937 implementation (seeding, twisting and tempering a 624-word state grid). 
+- `Random` helper class for generating `n` uniform floats in the interval `[a, b]`. 
+- Supports both a fixed default seed and a dynamically generated seed. 
+- Summary of the main concepts and maths behind the algorithm. 
+- Statistical validation of generator with a summary including derivations of formulae and results. 
 
 ## Installation
 
